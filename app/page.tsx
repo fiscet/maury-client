@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/utils/supabase';
+import { createClient } from '@/utils/supabase/client';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Alert } from '@/components/Alert';
@@ -14,6 +14,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,9 +22,12 @@ export default function Login() {
     setError(null);
 
     try {
-      const { data: { user }, error } = await supabase.auth.signInWithPassword({
+      const {
+        data: { user },
+        error
+      } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password
       });
 
       if (error) throw error;
@@ -43,8 +47,9 @@ export default function Login() {
       }
 
       router.push('/dashboard');
-    } catch (err: any) {
-      if (err.message.includes('Invalid login credentials')) {
+    } catch (err) {
+      const message = (err as Error)?.message || '';
+      if (message.includes('Invalid login credentials')) {
         setError('Email o password errati.');
       } else {
         setError('Si è verificato un errore. Riprova più tardi.');
@@ -69,8 +74,12 @@ export default function Login() {
               priority
             />
           </div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight italic mb-2 uppercase">Portale Clienti</h1>
-          <p className="text-slate-500 font-medium tracking-tight">Accedi all'area riservata di HM Management</p>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight italic mb-2 uppercase">
+            Portale Clienti
+          </h1>
+          <p className="text-slate-500 font-medium tracking-tight">
+            Accedi all&apos;area riservata di HM Management
+          </p>
         </div>
 
         <div className="card-premium">
@@ -102,8 +111,14 @@ export default function Login() {
 
             <div className="space-y-3">
               <div className="flex justify-between items-end pr-1">
-                <label className="label-premium !mb-0">Password di Accesso</label>
-                <Link href="/auth/forgot-password" title="Recupera password" className="text-[10px] font-black text-primary uppercase tracking-widest hover:text-primary-hover transition-colors">
+                <label className="label-premium !mb-0">
+                  Password di Accesso
+                </label>
+                <Link
+                  href="/auth/forgot-password"
+                  title="Recupera password"
+                  className="text-[10px] font-black text-primary uppercase tracking-widest hover:text-primary-hover transition-colors"
+                >
                   Dimenticata?
                 </Link>
               </div>

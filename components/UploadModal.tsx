@@ -2,19 +2,24 @@
 
 import { useState } from 'react';
 import { uploadDocument } from '@/services/storage';
-import { X, Upload, Calendar, FilePlus, Loader2 } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
+import { X, Upload, FilePlus, Loader2 } from 'lucide-react';
+import { Document } from '@/types';
 
 interface UploadModalProps {
   onClose: () => void;
-  onUploadSuccess: (fileData: any) => void;
+  onUploadSuccess: (fileData: Document) => void;
 }
 
 export default function UploadModal({
   onClose,
   onUploadSuccess
 }: UploadModalProps) {
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear, currentYear - 1, currentYear - 2];
+
   const [file, setFile] = useState<File | null>(null);
-  const [year, setYear] = useState('2024');
+  const [year, setYear] = useState(currentYear.toString());
   const [month, setMonth] = useState('01');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,9 +40,7 @@ export default function UploadModal({
       // In a real app we'd get this from auth context
       const {
         data: { user }
-      } = await (await import('@/utils/supabase/client'))
-        .createClient()
-        .auth.getUser();
+      } = await createClient().auth.getUser();
       if (!user) throw new Error('User not found');
 
       const result = await uploadDocument(file, user.id, year, month);
@@ -94,8 +97,11 @@ export default function UploadModal({
                 onChange={(e) => setYear(e.target.value)}
                 className="input-premium h-14 !py-0 flex-1 appearance-none bg-white font-bold"
               >
-                <option value="2024">2024</option>
-                <option value="2023">2023</option>
+                {years.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
               </select>
               <select
                 value={month}

@@ -8,9 +8,17 @@ export interface SharedNotesModalProps {
   notes: Note[];
   onSend: (content: string) => void;
   loading: boolean;
+  currentUserId: string | null;
 }
 
-export function NotesModalUI({ documentName, onClose, notes, onSend, loading }: SharedNotesModalProps) {
+export function NotesModalUI({
+  documentName,
+  onClose,
+  notes,
+  onSend,
+  loading,
+  currentUserId
+}: SharedNotesModalProps) {
   const [newNote, setNewNote] = useState('');
 
   const handleSendClick = () => {
@@ -33,8 +41,12 @@ export function NotesModalUI({ documentName, onClose, notes, onSend, loading }: 
               <MessageSquare className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-slate-900 tracking-tight italic leading-tight">Note Documento</h3>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest truncate max-w-[200px] md:max-w-xs">{documentName}</p>
+              <h3 className="text-lg font-black text-slate-900 tracking-tight italic leading-tight">
+                Note Documento
+              </h3>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest truncate max-w-[200px] md:max-w-xs">
+                {documentName}
+              </p>
             </div>
           </div>
           <button
@@ -50,31 +62,54 @@ export function NotesModalUI({ documentName, onClose, notes, onSend, loading }: 
           {loading ? (
             <div className="flex flex-col items-center justify-center h-full text-slate-400">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-              <p className="text-sm font-bold uppercase tracking-widest">Caricamento...</p>
+              <p className="text-sm font-bold uppercase tracking-widest">
+                Caricamento...
+              </p>
+            </div>
+          ) : notes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-slate-300 gap-3">
+              <MessageSquare className="w-12 h-12 opacity-20" />
+              <p className="text-sm font-medium italic">
+                Nessuna nota presente per questo file.
+              </p>
             </div>
           ) : (
-            notes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-slate-300 gap-3">
-                <MessageSquare className="w-12 h-12 opacity-20" />
-                <p className="text-sm font-medium italic">Nessuna nota presente per questo file.</p>
-              </div>
-            ) : (
-              notes.map(note => (
-                <div key={note.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm animate-in slide-in-from-bottom-2 duration-300">
-                  <div className="flex items-center justify-between mb-2">
+            notes.map((note) => {
+              const isMe = currentUserId && note.author_id === currentUserId;
+              return (
+                <div
+                  key={note.id}
+                  className={`p-4 rounded-xl border shadow-sm animate-in slide-in-from-bottom-2 duration-300 max-w-[85%] ${
+                    isMe
+                      ? 'ml-auto bg-primary/5 border-primary/20'
+                      : 'mr-auto bg-white border-slate-100'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2 gap-4">
                     <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                       <Clock className="w-3 h-3" />
-                      {new Date(note.created_at).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}
+                      {new Date(note.created_at).toLocaleString('it-IT', {
+                        dateStyle: 'short',
+                        timeStyle: 'short'
+                      })}
                     </div>
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 rounded text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                    <div
+                      className={`flex items-center gap-1.5 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest ${
+                        isMe
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}
+                    >
                       <User className="w-2.5 h-2.5" />
-                      Autore
+                      {isMe ? 'Tu' : 'Admin'}
                     </div>
                   </div>
-                  <div className="text-sm text-slate-800 leading-relaxed font-medium">{note.content}</div>
+                  <div className="text-sm text-slate-800 leading-relaxed font-medium">
+                    {note.content}
+                  </div>
                 </div>
-              ))
-            )
+              );
+            })
           )}
         </div>
 

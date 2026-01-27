@@ -11,12 +11,45 @@ interface NotesModalProps {
   onClose: () => void;
 }
 
-export default function NotesModal({ documentId, documentName, onClose }: NotesModalProps) {
+export default function NotesModal({
+  documentId,
+  documentName,
+  onClose
+}: NotesModalProps) {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const supabase = createClient();
 
+  const fetchNotes = async () => {
+    if (notes.length === 0) setLoading(true);
+
+    const { data, error } = await supabase
+      .from('maury_document_notes')
+      .select('*')
+      .eq('document_id', documentId)
+      .order('created_at', { ascending: true });
+
+    if (data) {
+      setNotes(data);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
+    // Auth Check
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setCurrentUserId(session.user.id);
+      }
+    });
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setCurrentUserId(user.id);
+    });
+
     fetchNotes();
 
     // Realtime Subscription
@@ -40,43 +73,25 @@ export default function NotesModal({ documentId, documentName, onClose }: NotesM
 
     return () => {
       supabase.removeChannel(channel);
+      subscription.unsubscribe();
     };
   }, [documentId]);
-
-  const fetchNotes = async () => {
-    // setLoading(true); // Don't show loading on refetch if we keep previous notes, or only on first load
-    // Actually simpler to just load once.
-    if (notes.length === 0) setLoading(true);
-
-    const { data, error } = await supabase
-      .from('maury_document_notes')
-      .select('*')
-      .eq('document_id', documentId)
-      .order('created_at', { ascending: true });
-
-    if (data) {
-      setNotes(data);
-    }
-    setLoading(false);
-  };
 
   const handleSend = async (content: string) => {
     if (!content.trim()) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { error } = await supabase
-      .from('maury_document_notes')
-      .insert({
-        document_id: documentId,
-        content: content,
-        author_id: user.id
-      });
+    const { error } = await supabase.from('maury_document_notes').insert({
+      document_id: documentId,
+      content: content,
+      author_id: user.id
+    });
 
     if (!error) {
-      // Input clearing is handled by UI component usually, but since we manage state here?
-      // Actually UI component manages 'newNote' state internally now.
       fetchNotes();
     } else {
       console.error(error);
@@ -90,12 +105,10 @@ export default function NotesModal({ documentId, documentName, onClose }: NotesM
       onClose={onClose}
       notes={notes}
       onSend={(content) => {
-        // The original instruction included setNewNote(content) here,
-        // but since newNote state is removed and handleSend now takes content directly,
-        // we just call handleSend with the content.
         handleSend(content);
       }}
       loading={loading}
+      currentUserId={currentUserId}
     />
   );
 }

@@ -7,7 +7,7 @@ import UploadScreen from './UploadScreen';
 import NotesModal from './NotesModal';
 import { Document } from '@/types';
 import { createClient } from '@/utils/supabase/client';
-import { Settings, Plus, FileText, Calendar } from 'lucide-react';
+import { Settings, Plus, FileText, Calendar, RefreshCw } from 'lucide-react';
 
 export default function DashboardClient({
   initialDocuments
@@ -25,6 +25,16 @@ export default function DashboardClient({
   const [yearFilter, setYearFilter] = useState(currentYear.toString());
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedNoteDoc, setSelectedNoteDoc] = useState<Document | null>(null);
+
+  const handleRefresh = async () => {
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.unregister();
+      }
+    }
+    window.location.reload();
+  };
 
   const handleUploadClick = () => {
     setIsUploadModalOpen(true);
@@ -82,6 +92,13 @@ export default function DashboardClient({
             </p>
           </div>
           <div className="flex gap-4">
+            <button
+              onClick={handleRefresh}
+              className="flex items-center gap-2 px-4 py-4 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+              title="Aggiorna App"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
             <Link
               href="/dashboard/profile"
               className="flex items-center gap-2 px-6 py-4 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all shadow-sm active:scale-95"

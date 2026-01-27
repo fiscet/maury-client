@@ -1,10 +1,11 @@
-import { supabase } from '@/utils/supabase';
+import { createClient } from '@/utils/supabase/client';
 
 /**
  * Uploads a file to the 'documents' bucket.
  * Path format: {userId}/{year}/{fileName}
  */
 export async function uploadDocument(file: File, userId: string, year: string, month: string) {
+  const supabase = createClient();
   const fileExt = file.name.split('.').pop();
   const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
   const filePath = `${userId}/${year}/${month}/${fileName}`;

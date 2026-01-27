@@ -21,12 +21,26 @@ export default function Login() {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: { user }, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
+
+      if (user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('maury_profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError || profile?.role !== 'customer') {
+          await supabase.auth.signOut();
+          setError('Accesso negato. Questa area è riservata ai clienti.');
+          return;
+        }
+      }
 
       router.push('/dashboard');
     } catch (err: any) {

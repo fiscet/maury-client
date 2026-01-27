@@ -2,16 +2,24 @@
 
 import { useState } from 'react';
 import { uploadDocument } from '@/services/storage';
-import { X, Upload, Calendar, FilePlus, Loader2 } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
+import { X, Upload, FilePlus, Loader2 } from 'lucide-react';
+import { Document } from '@/types';
 
 interface UploadModalProps {
   onClose: () => void;
-  onUploadSuccess: (fileData: any) => void;
+  onUploadSuccess: (fileData: Document) => void;
 }
 
-export default function UploadModal({ onClose, onUploadSuccess }: UploadModalProps) {
+export default function UploadModal({
+  onClose,
+  onUploadSuccess
+}: UploadModalProps) {
+  const currentYear = new Date().getFullYear();
+  const years = [currentYear, currentYear - 1, currentYear - 2];
+
   const [file, setFile] = useState<File | null>(null);
-  const [year, setYear] = useState('2024');
+  const [year, setYear] = useState(currentYear.toString());
   const [month, setMonth] = useState('01');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,13 +38,15 @@ export default function UploadModal({ onClose, onUploadSuccess }: UploadModalPro
 
     try {
       // In a real app we'd get this from auth context
-      const { data: { user } } = await (await import('@/utils/supabase/client')).createClient().auth.getUser();
+      const {
+        data: { user }
+      } = await createClient().auth.getUser();
       if (!user) throw new Error('User not found');
 
       const result = await uploadDocument(file, user.id, year, month);
       onUploadSuccess(result);
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
       setError('Errore durante il caricamento. Riprova.');
     } finally {
@@ -62,8 +72,12 @@ export default function UploadModal({ onClose, onUploadSuccess }: UploadModalPro
             <Upload className="w-7 h-7" />
           </div>
           <div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight italic leading-tight">Carica File</h3>
-            <p className="text-sm font-medium text-slate-500 mt-1">Archivia un nuovo documento nel tuo portale.</p>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight italic leading-tight">
+              Carica File
+            </h3>
+            <p className="text-sm font-medium text-slate-500 mt-1">
+              Archivia un nuovo documento nel tuo portale.
+            </p>
           </div>
         </div>
 
@@ -83,8 +97,11 @@ export default function UploadModal({ onClose, onUploadSuccess }: UploadModalPro
                 onChange={(e) => setYear(e.target.value)}
                 className="input-premium h-14 !py-0 flex-1 appearance-none bg-white font-bold"
               >
-                <option value="2024">2024</option>
-                <option value="2023">2023</option>
+                {years.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
               </select>
               <select
                 value={month}
@@ -114,6 +131,7 @@ export default function UploadModal({ onClose, onUploadSuccess }: UploadModalPro
                 type="file"
                 onChange={handleFileChange}
                 accept="application/pdf,image/*"
+                capture="environment"
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
               />
               <div className="input-premium flex items-center gap-4 py-8 border-dashed border-2 group-hover:border-primary transition-colors text-slate-500 group-hover:text-primary">
@@ -144,7 +162,9 @@ export default function UploadModal({ onClose, onUploadSuccess }: UploadModalPro
                   <Loader2 className="w-5 h-5 animate-spin mr-2" />
                   CARICAMENTO...
                 </>
-              ) : 'CARICA FILE'}
+              ) : (
+                'CARICA FILE'
+              )}
             </button>
           </div>
         </div>

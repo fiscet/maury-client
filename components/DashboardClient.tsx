@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import FileItem from './FileItem';
 import UploadScreen from './UploadScreen';
@@ -25,6 +25,49 @@ export default function DashboardClient({
   const [yearFilter, setYearFilter] = useState(currentYear.toString());
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedNoteDoc, setSelectedNoteDoc] = useState<Document | null>(null);
+
+  useEffect(() => {
+    const fetchNoteCounts = async () => {
+      const supabase = createClient();
+      const docIds = initialDocuments.map((d) => d.id);
+      if (docIds.length === 0) return;
+
+      const { data, error } = await supabase
+        .from('maury_document_notes')
+        .select('document_id')
+        .in('document_id', docIds);
+
+      if (data) {
+        const counts: Record<string, number> = {};
+        data.forEach((note: { document_id: string }) => {
+          counts[note.document_id] = (counts[note.document_id] || 0) + 1;
+        });
+
+        setDocuments((prevDocs) =>
+          prevDocs.map((doc) => ({
+            ...doc,
+            notesCount: counts[doc.id] || 0
+          }))
+        );
+      }
+    };
+
+    fetchNoteCounts();
+  }, [initialDocuments]);
+
+  const updateCountFor = async (docId: string) => {
+    const supabase = createClient();
+    const { count } = await supabase
+      .from('maury_document_notes')
+      .select('*', { count: 'exact', head: true })
+      .eq('document_id', docId);
+
+    if (count !== null) {
+      setDocuments((prev) =>
+        prev.map((d) => (d.id === docId ? { ...d, notesCount: count } : d))
+      );
+    }
+  };
 
   const handleRefresh = async () => {
     window.location.reload();
@@ -64,6 +107,10 @@ export default function DashboardClient({
       alert('Errore download');
     }
   };
+
+  const filteredDocuments = documents.filter((doc) => {
+    return doc.year === yearFilter;
+  });
 
   return (
     <div className="relative w-full min-h-[calc(100vh-80px)] overflow-hidden">
@@ -114,7 +161,11 @@ export default function DashboardClient({
           <NotesModal
             documentId={selectedNoteDoc.id}
             documentName={selectedNoteDoc.name}
-            onClose={() => setSelectedNoteDoc(null)}
+            onClose={() => {
+              const id = selectedNoteDoc.id;
+              setSelectedNoteDoc(null);
+              updateCountFor(id);
+            }}
           />
         )}
 
@@ -140,7 +191,7 @@ export default function DashboardClient({
                   Documenti
                 </p>
                 <p className="text-xl font-black text-slate-900 leading-none">
-                  {documents.length}
+                  {filteredDocuments.length}
                 </p>
               </div>
             </div>
@@ -148,11 +199,11 @@ export default function DashboardClient({
 
           {/* Document List */}
           <div className="divide-y divide-slate-50">
-            {documents.map((doc) => (
+            {filteredDocuments.map((doc) => (
               <FileItem
                 key={doc.id}
                 name={doc.name}
-                date={new Date(doc.created_at).toLocaleDateString()}
+                date={`${doc.month}/${doc.year}`}
                 size={doc.size}
                 status={doc.status}
                 type={doc.type}
@@ -162,7 +213,7 @@ export default function DashboardClient({
               />
             ))}
 
-            {documents.length === 0 && (
+            {filteredDocuments.length === 0 && (
               <div className="px-8 py-20 text-center">
                 <div className="flex flex-col items-center gap-3">
                   <FileText className="w-12 h-12 text-slate-200" />

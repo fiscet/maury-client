@@ -125,12 +125,12 @@ export function NotesModalUI({
               onKeyDown={(e) => e.key === 'Enter' && handleSendClick()}
             />
             <button
-              className="btn-premium w-14 h-12 px-0 shrink-0"
+              className="btn-premium w-12 h-12 px-0 shrink-0 flex items-center justify-center"
               onClick={handleSendClick}
               disabled={!newNote.trim()}
               title="Invia"
             >
-              <Send className="w-5 h-5 translate-x-0.5 -translate-y-0.5 rotate-[-15deg]" />
+              <Send className="w-5 h-5 rotate-[-15deg] translate-x-0.5 -translate-y-0.5" />
             </button>
           </div>
         </div>

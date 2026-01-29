@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { supabase } from '@/utils/supabase'; // Adjust import if needed (should be browser client)
 import { createBrowserClient } from '@supabase/ssr';
 import Link from 'next/link';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string; } | null>(null);
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
 
   // Ensure we use a browser client
   const supabaseClient = createBrowserClient(
@@ -25,32 +27,54 @@ export default function ForgotPassword() {
       // Determines where to redirect after clicking the email link
       // For Client app, we want to go straight to the profile/dashboard to reset
       const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/profile`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/profile`
       });
 
       if (error) throw error;
 
       setMessage({
         type: 'success',
-        text: 'Controlla la tua email. Ti abbiamo inviato un link per reimpostare la password.'
+        text:
+          'Controlla la tua email. Ti abbiamo inviato un link per reimpostare la password.'
       });
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message });
+    } catch (err) {
+      setMessage({ type: 'error', text: (err as Error).message });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-      <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '20px' }}>
+    <div
+      className="container"
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '80vh'
+      }}
+    >
+      <div
+        className="card"
+        style={{ width: '100%', maxWidth: '400px', padding: '20px' }}
+      >
         <div className="text-center mb-4">
-          <img src="/logo-hm-new.png" alt="HM Management" style={{ maxWidth: '150px', height: 'auto' }} />
+          <img
+            src="/logo-hm-new.png"
+            alt="HM Management"
+            style={{ maxWidth: '150px', height: 'auto' }}
+          />
         </div>
         <h2 className="text-center mb-6">Recupera Password</h2>
 
         {message && (
-          <div className={`p-3 mb-4 rounded ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          <div
+            className={`p-3 mb-4 rounded ${
+              message.type === 'success'
+                ? 'bg-green-100 text-green-700'
+                : 'bg-red-100 text-red-700'
+            }`}
+          >
             {message.text}
           </div>
         )}
@@ -67,13 +91,20 @@ export default function ForgotPassword() {
               className="input w-full"
             />
           </div>
-          <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+          <button
+            type="submit"
+            className="btn btn-primary w-full"
+            disabled={loading}
+          >
             {loading ? 'Invio in corso...' : 'Invia Link di Recupero'}
           </button>
         </form>
 
         <p className="text-center mt-4">
-          <Link href="/" className="text-sm text-gray shadow-none hover:underline">
+          <Link
+            href="/"
+            className="text-sm text-gray shadow-none hover:underline"
+          >
             Torna al Login
           </Link>
         </p>

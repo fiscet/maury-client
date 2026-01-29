@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
 import './globals.css';
+import PWAUpdatePrompt from '@/components/PWAUpdatePrompt';
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -39,7 +40,10 @@ export default function RootLayout({
       <head>
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
-      <body className={`${montserrat.className} app-shell`}>{children}</body>
+      <body className={`${montserrat.className} app-shell`}>
+        {children}
+        <PWAUpdatePrompt />
+      </body>
     </html>
   );
 }

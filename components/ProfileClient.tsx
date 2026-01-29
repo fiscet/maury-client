@@ -3,7 +3,15 @@
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { createBrowserClient } from '@supabase/ssr';
-import { UserCircle, Lock, Mail, Loader2, CheckCircle2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+  UserCircle,
+  Lock,
+  Mail,
+  Loader2,
+  CheckCircle2,
+  LogOut
+} from 'lucide-react';
 import { Alert } from './Alert';
 
 export default function ProfileClient({
@@ -15,10 +23,12 @@ export default function ProfileClient({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
     text: string;
   } | null>(null);
+  const router = useRouter();
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -66,6 +76,25 @@ export default function ProfileClient({
       setMessage({ type: 'error', text: (err as Error).message });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await supabase.auth.signOut();
+      // Clear any cached data
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(cacheNames.map((name) => caches.delete(name)));
+      }
+      router.push('/');
+      router.refresh();
+    } catch (err) {
+      console.error('Logout error:', err);
+      setMessage({ type: 'error', text: 'Errore durante il logout. Riprova.' });
+    } finally {
+      setLoggingOut(false);
     }
   };
 
@@ -118,6 +147,27 @@ export default function ProfileClient({
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* Logout Button */}
+              <div className="w-full pt-8 border-t border-slate-50">
+                <button
+                  onClick={handleLogout}
+                  disabled={loggingOut}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-red-50 hover:bg-red-100 text-red-600 font-black text-xs uppercase tracking-widest rounded-2xl border border-red-100 transition-all duration-300 disabled:opacity-50"
+                >
+                  {loggingOut ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Disconnessione...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="w-4 h-4" />
+                      <span>Esci dall&apos;Account</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>

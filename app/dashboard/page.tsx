@@ -1,6 +1,8 @@
 import { createClient } from '@/utils/supabase/server';
 import DashboardClient from '@/components/DashboardClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function Dashboard() {
   const supabase = await createClient();
 
@@ -9,7 +11,5 @@ export default async function Dashboard() {
     .select('*')
     .order('created_at', { ascending: false });
 
-  return (
-    <DashboardClient initialDocuments={documents || []} />
-  );
+  return <DashboardClient initialDocuments={documents || []} />;
 }

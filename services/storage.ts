@@ -4,11 +4,16 @@ import { createClient } from '@/utils/supabase/client';
  * Uploads a file to the 'documents' bucket.
  * Path format: {userId}/{year}/{fileName}
  */
-export async function uploadDocument(file: File, userId: string, year: string, month: string) {
+export async function uploadDocument(file: File, userId: string, year: string, month: string, customFileName?: string) {
   const supabase = createClient();
   const fileExt = file.name.split('.').pop();
   const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
   const filePath = `${userId}/${year}/${month}/${fileName}`;
+
+  // Use custom filename if provided, otherwise use original file name
+  const displayName = customFileName && customFileName.trim()
+    ? `${customFileName.trim()}.${fileExt}`
+    : file.name;
 
   // 1. Upload to Storage
   const { data: storageData, error: storageError } = await supabase.storage
@@ -24,7 +29,7 @@ export async function uploadDocument(file: File, userId: string, year: string, m
     .from('maury_documents')
     .insert({
       user_id: userId,
-      name: file.name,
+      name: displayName,
       file_path: filePath,
       year: year,
       month: month,

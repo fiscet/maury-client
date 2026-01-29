@@ -25,6 +25,7 @@ export default function DashboardClient({
   const [yearFilter, setYearFilter] = useState(currentYear.toString());
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [selectedNoteDoc, setSelectedNoteDoc] = useState<Document | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const fetchNoteCounts = async () => {
@@ -70,7 +71,11 @@ export default function DashboardClient({
   };
 
   const handleRefresh = async () => {
-    window.location.reload();
+    setIsRefreshing(true);
+    // Small delay to show the visual feedback before reload
+    setTimeout(() => {
+      window.location.reload();
+    }, 150);
   };
 
   const handleUploadClick = () => {
@@ -132,27 +137,35 @@ export default function DashboardClient({
               Visualizza e gestisci i tuoi file archiviati.
             </p>
           </div>
-          <div className="flex gap-4">
-            <button
-              onClick={handleRefresh}
-              className="flex items-center gap-2 px-4 py-4 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
-              title="Aggiorna App"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-            <Link
-              href="/dashboard/profile"
-              className="flex items-center gap-2 px-6 py-4 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
-            >
-              <Settings className="w-4 h-4" />
-              Profilo
-            </Link>
+          <div className="flex justify-between gap-2 sm:gap-4">
+            <div className="flex gap-2">
+              <button
+                onClick={handleRefresh}
+                className={`flex items-center gap-2 px-4 sm:px-6 py-4 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all shadow-sm active:scale-95 ${
+                  isRefreshing ? 'bg-slate-200 border-slate-300 scale-95' : ''
+                }`}
+                title="Aggiorna App"
+                disabled={isRefreshing}
+              >
+                <RefreshCw
+                  className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
+                />
+              </button>
+              <Link
+                href="/dashboard/profile"
+                className="flex items-center gap-2 px-4 sm:px-6 py-4 bg-white border border-slate-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 transition-all shadow-sm active:scale-95"
+              >
+                <Settings className="w-4 h-4" />
+                <span className="hidden sm:inline">Profilo</span>
+              </Link>
+            </div>
             <button
               onClick={handleUploadClick}
-              className="btn-premium flex items-center gap-2 group !py-4"
+              className="btn-premium flex items-center gap-2 group !py-4 px-4 sm:px-8"
             >
-              <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
-              CARICA FILE
+              <Plus className="w-4 h-4 group-hover:scale-110 transition-transform flex-shrink-0" />
+              <span className="hidden sm:inline">CARICA FILE</span>
+              <span className="sm:hidden">CARICA</span>
             </button>
           </div>
         </div>

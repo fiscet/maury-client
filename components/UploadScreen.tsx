@@ -19,6 +19,7 @@ export default function UploadScreen({
   const years = [currentYear, currentYear - 1, currentYear - 2];
 
   const [file, setFile] = useState<File | null>(null);
+  const [customFileName, setCustomFileName] = useState('');
   const [year, setYear] = useState(currentYear.toString());
   const [month, setMonth] = useState('01');
   const [uploading, setUploading] = useState(false);
@@ -26,7 +27,11 @@ export default function UploadScreen({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      // Pre-fill the custom filename with the original name (without extension)
+      const nameWithoutExt = selectedFile.name.replace(/\.[^/.]+$/, '');
+      setCustomFileName(nameWithoutExt);
       setError(null);
     }
   };
@@ -42,7 +47,13 @@ export default function UploadScreen({
       } = await createClient().auth.getUser();
       if (!user) throw new Error('User not found');
 
-      const result = await uploadDocument(file, user.id, year, month);
+      const result = await uploadDocument(
+        file,
+        user.id,
+        year,
+        month,
+        customFileName
+      );
       onUploadSuccess(result);
       onClose();
     } catch (err) {
@@ -139,13 +150,30 @@ export default function UploadScreen({
                   className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                 />
                 <div className="input-premium flex items-center gap-4 py-8 border-dashed border-2 group-hover:border-primary transition-colors text-slate-500 group-hover:text-primary">
-                  <FilePlus className="w-6 h-6" />
+                  <FilePlus className="w-6 h-6 flex-shrink-0" />
                   <span className="font-bold truncate">
                     {file ? file.name : 'Seleziona PDF o Immagine...'}
                   </span>
                 </div>
               </div>
             </div>
+
+            {file && (
+              <div className="space-y-4">
+                <label className="label-premium">Nome del Documento</label>
+                <input
+                  type="text"
+                  value={customFileName}
+                  onChange={(e) => setCustomFileName(e.target.value)}
+                  placeholder="Inserisci un nome per il documento..."
+                  className="input-premium"
+                />
+                <p className="text-xs text-slate-400 ml-1">
+                  Puoi modificare il nome prima di caricare. L&apos;estensione
+                  verrà aggiunta automaticamente.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
